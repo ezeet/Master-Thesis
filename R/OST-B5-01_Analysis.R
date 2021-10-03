@@ -15,6 +15,7 @@ library(lmerTest)
 library(lme4)
 library(rstatix)
 library(effectsize)
+library(psych)
 
 
 # clean environment
@@ -83,20 +84,17 @@ data_prep <- data_clean %>%
     task2_c = (task2_7 + task2_8 + (8 - task2_16) + (8 - task2_17)) / 4,
     task2_o = (task2_9 + task2_10 + (8 - task2_18) + (8 - task2_20)) / 4) %>% 
   # throw out reverse scored items
-  select(-c(b5_e1_r, b5_c1_r, b5_n1_r, b5_o1_r, b5_a2_r)) %>% 
+  select(-c(b5_e1_r, b5_c1_r, b5_n1_r, b5_o1_r, b5_a2_r, b5_a1, b5_e2, b5_c2, b5_n2, b5_o2, b5_e1, b5_c1, b5_n1, b5_o1, b5_a2, native, no_native, use_data, use_data_reason, comments, consent, seriousness, occupation, nt1, nt2, nt3, nt4, received_tosses, attention_check)) %>% 
   # order the columns
-  relocate(attention_check, excluded, ignored, received_tosses, sex, occupation, age, native, no_native, seriousness, use_data, use_data_reason, comments, nt, 
-           .before = nt1) %>% 
-  relocate(b5_e, b5_c, b5_n, b5_o, b5_a, b5_e1, b5_c1, b5_n1, b5_o1, b5_a2, 
-           .before = b5_a1) %>% 
-  relocate(task1_a, task1_c, task1_e, task1_n, task1_o, task2_a, task2_c, task2_e, task2_n, task2_o, 
+  relocate(excluded, ignored, sex, age, nt, 
+           .before = mood) %>% 
+  relocate(b5_e, b5_c, b5_n, b5_o, b5_a, task1_a, task1_c, task1_e, task1_n, task1_o, task2_a, task2_c, task2_e, task2_n, task2_o, 
            .before = task1_1)
 
 
 # demographics
-psych::describe(data_prep)
+describe(data_prep)
 table(data_prep$sex)
-
 
 # test need threat variable for normal distribution
 # normal distribution is given
@@ -107,7 +105,9 @@ ggplot(data_prep, aes(fill = condition, x = nt)) +
 
 
 # influence of cyberball on need threats
-t.test(nt ~ condition, data = data_prep) # p-value < 2.2e-16
+tt_nt <- t.test(nt ~ condition, data = data_prep) # p-value < 2.2e-16
+tt_nt
+cohens_d(nt ~ condition, data = data_prep)
 
 # descriptive statistics of need threats
 data_prep %>%
@@ -192,7 +192,40 @@ tt1_es_o <- cohens_d(task1_o ~ condition, data = data_prep)
 tt1_es_o
 
 
+# create long format
+data_long <- data_prep %>% 
+  pivot_longer(cols = c(task1_a, task1_c, task1_e, task1_n, task1_o), 
+               names_to = "task1", 
+               values_to = "task1_value") %>% 
+  relocate(task1, task1_value, .before = task2_a)
+  
+merging <- data_prep %>% 
+  pivot_longer(cols = c(task2_a, task2_c, task2_e, task2_n, task2_o), names_to = "task2", values_to = "task2_value", ) %>% 
+  select(task2, task2_value)
+
+data_long %<>% bind_cols(merging) %>% 
+  relocate(task2, task2_value, .after = task1_value)
+
+
+
 # ANOVA!!!!!!!!!!!
+# overall_anova1 <- lmer(task1_value ~ condition * task1 + (task1 | id), data = data_long)
+# anova(overall_anova1)
+# eta_squared(overall_anova1, partial = FALSE)
+
+overall_anova1 <- data_long %>%
+  anova_test(dv = task1_value, 
+             wid = id, 
+             within = task1, 
+             between = condition,
+             effect.size = "ges") %>%
+  get_anova_table()
+overall_anova1
+
+# pwc1 <- data_long %>%
+#   pairwise_t_test(task1_value ~ task1, p.adjust.method = "bonferroni")
+# pwc1
+
 
 
 
@@ -302,6 +335,11 @@ t2_anova_a <- lmer(task2_a_value ~ condition * task2_a_type + (task2_a_type | id
 anova(t2_anova_a)
 eta_squared(t2_anova_a, partial = FALSE)
 
+# agreeableness
+t2_anova_a <- lmer(task2_a_value ~ condition * task2_a_type + (1 | id), data = data_prep_a)
+anova(t2_anova_a)
+eta_squared(t2_anova_a, partial = FALSE)
+
 # conscientiousness
 t2_anova_c <- lmer(task2_c_value ~ condition * task2_c_type + (1 | id), data = data_prep_c)
 anova(t2_anova_c)
@@ -324,6 +362,19 @@ eta_squared(t2_anova_o, partial = FALSE)
 
 
 # ANOVA!!!!!!!!!
+overall_anova2 <- lmer(task2_value ~ condition * task2 + (1 | id), data = data_long)
+anova(overall_anova2)
+eta_squared(overall_anova2, partial = FALSE)
+
+overall_anova2 <- data_long %>%
+  anova_test(dv = task2_value, 
+             wid = id, 
+             within = task2, 
+             between = condition,
+             effect.size = "ges") %>%
+  get_anova_table()
+overall_anova2
+
 
 
 ## Moderator variable ----
@@ -349,6 +400,105 @@ summary(fitmod_n) # 0.579
 # openness
 fitmod_o <- lm(task1_o ~ condition + b5_o + condition:b5_o, data = data_prep)
 summary(fitmod_o) # 0.0438
+
+
+
+
+# data preperation for t-test on rating accuracy
+data_e_r <- data_prep %>% 
+  mutate(task2_enhanced = (task2_5 + task2_6 + task2_7 + task2_8 + task2_1 + task2_2 + task2_3 + task2_4 + task2_9 + task2_10) / 10,
+         task2_reduced = (task2_15 + task2_19 + task2_16 + task2_17 + task2_11 + task2_13 + task2_12 + task2_14 + task2_18 + task2_20) / 10)
+
+
+tt_enhanced <- t.test(data_e_r$task2_enhanced, mu = 4, alternative = "greater")
+tt_enhanced
+tt_enhanced_es <- cohens_d(tt_enhanced)
+tt_enhanced_es
+sd(data_e_r$task2_enhanced)
+
+tt_reduced <- t.test(data_e_r$task2_reduced, mu = 4, alternative = "less")
+tt_reduced
+tt_reduced_es <- cohens_d(tt_reduced)
+tt_reduced_es
+sd(data_e_r$task2_reduced)
+
+
+
+data_individual <- data_prep %>% 
+  mutate(task2_a_e = (task2_5 + task2_6) / 2,
+         task2_a_r = (task2_15 + task2_19) / 2,
+         task2_c_e = (task2_7 + task2_8) / 2,
+         task2_c_r = (task2_16 + task2_17) / 2,
+         task2_e_e = (task2_1 + task2_2) / 2,
+         task2_e_r = (task2_11 + task2_13) / 2,
+         task2_n_e = (task2_3 + task2_4) / 2,
+         task2_n_r = (task2_12 + task2_14) / 2,
+         task2_o_e = (task2_9 + task2_10) / 2,
+         task2_o_r = (task2_18 + task2_20) / 2)
+
+
+tt_enhanced_a <- t.test(data_individual$task2_a_e, mu = 4, alternative = "greater")
+tt_enhanced_a
+tt_enhanced_a_es <- cohens_d(tt_enhanced_a)
+tt_enhanced_a_es
+sd(data_individual$task2_a_e)
+
+tt_enhanced_c <- t.test(data_individual$task2_c_e, mu = 4, alternative = "greater")
+tt_enhanced_c
+tt_enhanced_c_es <- cohens_d(tt_enhanced_c)
+tt_enhanced_c_es
+sd(data_individual$task2_c_e)
+
+tt_enhanced_e <- t.test(data_individual$task2_e_e, mu = 4, alternative = "greater")
+tt_enhanced_e
+tt_enhanced_e_es <- cohens_d(tt_enhanced_e)
+tt_enhanced_e_es
+sd(data_individual$task2_e_e)
+
+tt_enhanced_n <- t.test(data_individual$task2_n_e, mu = 4, alternative = "greater")
+tt_enhanced_n
+tt_enhanced_n_es <- cohens_d(tt_enhanced_n)
+tt_enhanced_n_es
+sd(data_individual$task2_n_e)
+
+tt_enhanced_o <- t.test(data_individual$task2_o_e, mu = 4, alternative = "greater")
+tt_enhanced_o
+tt_enhanced_o_es <- cohens_d(tt_enhanced_o)
+tt_enhanced_o_es
+sd(data_individual$task2_o_e)
+
+
+tt_reduced_a <- t.test(data_individual$task2_a_r, mu = 4, alternative = "less")
+tt_reduced_a
+tt_reduced_a_es <- cohens_d(tt_reduced_a)
+tt_reduced_a_es
+sd(data_individual$task2_a_r)
+
+tt_reduced_c <- t.test(data_individual$task2_c_r, mu = 4, alternative = "less")
+tt_reduced_c
+tt_reduced_c_es <- cohens_d(tt_reduced_c)
+tt_reduced_c_es
+sd(data_individual$task2_c_r)
+
+tt_reduced_e <- t.test(data_individual$task2_e_r, mu = 4, alternative = "less")
+tt_reduced_e
+tt_reduced_e_es <- cohens_d(tt_reduced_e)
+tt_reduced_e_es
+sd(data_individual$task2_e_r)
+
+tt_reduced_n <- t.test(data_individual$task2_n_r, mu = 4, alternative = "less")
+tt_reduced_n
+tt_reduced_n_es <- cohens_d(tt_reduced_n)
+tt_reduced_n_es
+sd(data_individual$task2_n_r)
+
+tt_reduced_o <- t.test(data_individual$task2_o_r, mu = 4, alternative = "less")
+tt_reduced_o
+tt_reduced_o_es <- cohens_d(tt_reduced_o)
+tt_reduced_o_es
+sd(data_individual$task2_o_r)
+
+
 
 
 
