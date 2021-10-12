@@ -208,11 +208,7 @@ data_long %<>% bind_cols(merging) %>%
 
 
 
-# ANOVA!!!!!!!!!!!
-# overall_anova1 <- lmer(task1_value ~ condition * task1 + (task1 | id), data = data_long)
-# anova(overall_anova1)
-# eta_squared(overall_anova1, partial = FALSE)
-
+# overall ANOVA
 overall_anova1 <- data_long %>%
   anova_test(dv = task1_value, 
              wid = id, 
@@ -221,10 +217,6 @@ overall_anova1 <- data_long %>%
              effect.size = "ges") %>%
   get_anova_table()
 overall_anova1
-
-# pwc1 <- data_long %>%
-#   pairwise_t_test(task1_value ~ task1, p.adjust.method = "bonferroni")
-# pwc1
 
 
 
@@ -361,11 +353,7 @@ anova(t2_anova_o)
 eta_squared(t2_anova_o, partial = FALSE)
 
 
-# ANOVA!!!!!!!!!
-overall_anova2 <- lmer(task2_value ~ condition * task2 + (1 | id), data = data_long)
-anova(overall_anova2)
-eta_squared(overall_anova2, partial = FALSE)
-
+# overall ANOVA
 overall_anova2 <- data_long %>%
   anova_test(dv = task2_value, 
              wid = id, 
@@ -403,6 +391,7 @@ summary(fitmod_o) # 0.0438
 
 
 
+# Exploratory analysis ----
 
 # data preperation for t-test on rating accuracy
 data_e_r <- data_prep %>% 
@@ -410,12 +399,14 @@ data_e_r <- data_prep %>%
          task2_reduced = (task2_15 + task2_19 + task2_16 + task2_17 + task2_11 + task2_13 + task2_12 + task2_14 + task2_18 + task2_20) / 10)
 
 
+# general test for enhanced trait manipulations
 tt_enhanced <- t.test(data_e_r$task2_enhanced, mu = 4, alternative = "greater")
 tt_enhanced
 tt_enhanced_es <- cohens_d(tt_enhanced)
 tt_enhanced_es
 sd(data_e_r$task2_enhanced)
 
+# general test for reduced trait manipulations
 tt_reduced <- t.test(data_e_r$task2_reduced, mu = 4, alternative = "less")
 tt_reduced
 tt_reduced_es <- cohens_d(tt_reduced)
@@ -423,7 +414,7 @@ tt_reduced_es
 sd(data_e_r$task2_reduced)
 
 
-
+# data prep
 data_individual <- data_prep %>% 
   mutate(task2_a_e = (task2_5 + task2_6) / 2,
          task2_a_r = (task2_15 + task2_19) / 2,
@@ -437,62 +428,76 @@ data_individual <- data_prep %>%
          task2_o_r = (task2_18 + task2_20) / 2)
 
 
-tt_enhanced_a <- t.test(data_individual$task2_a_e, mu = 4, alternative = "greater")
+# enhanced trait manipulations
+
+# agreeableness
+tt_enhanced_a <- t.test(data_individual$task2_a_e, mu = 4, alternative = "two.sided")
 tt_enhanced_a
 tt_enhanced_a_es <- cohens_d(tt_enhanced_a)
 tt_enhanced_a_es
 sd(data_individual$task2_a_e)
 
-tt_enhanced_c <- t.test(data_individual$task2_c_e, mu = 4, alternative = "greater")
+# conscientiousness
+tt_enhanced_c <- t.test(data_individual$task2_c_e, mu = 4, alternative = "two.sided")
 tt_enhanced_c
 tt_enhanced_c_es <- cohens_d(tt_enhanced_c)
 tt_enhanced_c_es
 sd(data_individual$task2_c_e)
 
-tt_enhanced_e <- t.test(data_individual$task2_e_e, mu = 4, alternative = "greater")
+# extraversion
+tt_enhanced_e <- t.test(data_individual$task2_e_e, mu = 4, alternative = "two.sided")
 tt_enhanced_e
 tt_enhanced_e_es <- cohens_d(tt_enhanced_e)
 tt_enhanced_e_es
 sd(data_individual$task2_e_e)
 
-tt_enhanced_n <- t.test(data_individual$task2_n_e, mu = 4, alternative = "greater")
+# neuroticism
+tt_enhanced_n <- t.test(data_individual$task2_n_e, mu = 4, alternative = "two.sided")
 tt_enhanced_n
 tt_enhanced_n_es <- cohens_d(tt_enhanced_n)
 tt_enhanced_n_es
 sd(data_individual$task2_n_e)
 
-tt_enhanced_o <- t.test(data_individual$task2_o_e, mu = 4, alternative = "greater")
+# openness
+tt_enhanced_o <- t.test(data_individual$task2_o_e, mu = 4, alternative = "two.sided")
 tt_enhanced_o
 tt_enhanced_o_es <- cohens_d(tt_enhanced_o)
 tt_enhanced_o_es
 sd(data_individual$task2_o_e)
 
 
-tt_reduced_a <- t.test(data_individual$task2_a_r, mu = 4, alternative = "less")
+# reduced trait manipulations
+
+# agreeableness
+tt_reduced_a <- t.test(data_individual$task2_a_r, mu = 4, alternative = "two.sided")
 tt_reduced_a
 tt_reduced_a_es <- cohens_d(tt_reduced_a)
 tt_reduced_a_es
 sd(data_individual$task2_a_r)
 
-tt_reduced_c <- t.test(data_individual$task2_c_r, mu = 4, alternative = "less")
+# conscientiousness
+tt_reduced_c <- t.test(data_individual$task2_c_r, mu = 4, alternative = "two.sided")
 tt_reduced_c
 tt_reduced_c_es <- cohens_d(tt_reduced_c)
 tt_reduced_c_es
 sd(data_individual$task2_c_r)
 
-tt_reduced_e <- t.test(data_individual$task2_e_r, mu = 4, alternative = "less")
+# extraversion
+tt_reduced_e <- t.test(data_individual$task2_e_r, mu = 4, alternative = "two.sided")
 tt_reduced_e
 tt_reduced_e_es <- cohens_d(tt_reduced_e)
 tt_reduced_e_es
 sd(data_individual$task2_e_r)
 
-tt_reduced_n <- t.test(data_individual$task2_n_r, mu = 4, alternative = "less")
+# neuroticism
+tt_reduced_n <- t.test(data_individual$task2_n_r, mu = 4, alternative = "two.sided")
 tt_reduced_n
 tt_reduced_n_es <- cohens_d(tt_reduced_n)
 tt_reduced_n_es
 sd(data_individual$task2_n_r)
 
-tt_reduced_o <- t.test(data_individual$task2_o_r, mu = 4, alternative = "less")
+# openness
+tt_reduced_o <- t.test(data_individual$task2_o_r, mu = 4, alternative = "two.sided")
 tt_reduced_o
 tt_reduced_o_es <- cohens_d(tt_reduced_o)
 tt_reduced_o_es
