@@ -323,11 +323,6 @@ data_prep_o <- data_prep %>%
 # ANOVA with direction of trait manipulation as a factor
 
 # agreeableness
-t2_anova_a <- lmer(task2_a_value ~ condition * task2_a_type + (task2_a_type | id), data = data_prep_a)
-anova(t2_anova_a)
-eta_squared(t2_anova_a, partial = FALSE)
-
-# agreeableness
 t2_anova_a <- lmer(task2_a_value ~ condition * task2_a_type + (1 | id), data = data_prep_a)
 anova(t2_anova_a)
 eta_squared(t2_anova_a, partial = FALSE)
@@ -370,23 +365,23 @@ overall_anova2
 # calculate linear model for every trait - influence of each big five trait (moderator) on the effect of condition on the big five ratings
 
 # agreeableness
-fitmod_a <- lm(task1_a ~ condition + b5_a + condition:b5_a, data = data_prep)
+fitmod_a <- lm(task1_a ~ condition * b5_a, data = data_prep)
 summary(fitmod_a) # 0.407
 
 # conscientiousness
-fitmod_c <- lm(task1_c ~ condition + b5_c + condition:b5_c, data = data_prep)
+fitmod_c <- lm(task1_c ~ condition * b5_c, data = data_prep)
 summary(fitmod_c) # 0.774
 
 # extraversion
-fitmod_e <- lm(task1_e ~ condition + b5_e + condition:b5_e, data = data_prep)
+fitmod_e <- lm(task1_e ~ condition * b5_e, data = data_prep)
 summary(fitmod_e) # 0.347
 
 # neuroticism
-fitmod_n <- lm(task1_n ~ condition + b5_n + condition:b5_n, data = data_prep)
+fitmod_n <- lm(task1_n ~ condition * b5_n, data = data_prep)
 summary(fitmod_n) # 0.579
 
 # openness
-fitmod_o <- lm(task1_o ~ condition + b5_o + condition:b5_o, data = data_prep)
+fitmod_o <- lm(task1_o ~ condition * b5_o, data = data_prep)
 summary(fitmod_o) # 0.0438
 
 
