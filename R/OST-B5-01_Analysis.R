@@ -139,6 +139,33 @@ data_prep %>%
   arrange(variable)
 
 
+# create long format
+data_long <- data_prep %>% 
+  pivot_longer(cols = c(task1_a, task1_c, task1_e, task1_n, task1_o), 
+               names_to = "task1", 
+               values_to = "task1_value") %>% 
+  relocate(task1, task1_value, .before = task2_a)
+
+merging <- data_prep %>% 
+  pivot_longer(cols = c(task2_a, task2_c, task2_e, task2_n, task2_o), names_to = "task2", values_to = "task2_value", ) %>% 
+  select(task2, task2_value)
+
+data_long %<>% bind_cols(merging) %>% 
+  relocate(task2, task2_value, .after = task1_value)
+
+
+
+# overall ANOVA
+overall_anova1 <- data_long %>%
+  anova_test(dv = task1_value, 
+             wid = id, 
+             within = task1, 
+             between = condition,
+             effect.size = "ges") %>%
+  get_anova_table()
+overall_anova1
+
+
 # calculate t-test for every trait - influence of condition on each trait preference and adjusting the p-value with the bonferroni-method
 
 # agreeableness
@@ -192,33 +219,6 @@ tt1_es_o <- cohens_d(task1_o ~ condition, data = data_prep)
 tt1_es_o
 
 
-# create long format
-data_long <- data_prep %>% 
-  pivot_longer(cols = c(task1_a, task1_c, task1_e, task1_n, task1_o), 
-               names_to = "task1", 
-               values_to = "task1_value") %>% 
-  relocate(task1, task1_value, .before = task2_a)
-  
-merging <- data_prep %>% 
-  pivot_longer(cols = c(task2_a, task2_c, task2_e, task2_n, task2_o), names_to = "task2", values_to = "task2_value", ) %>% 
-  select(task2, task2_value)
-
-data_long %<>% bind_cols(merging) %>% 
-  relocate(task2, task2_value, .after = task1_value)
-
-
-
-# overall ANOVA
-overall_anova1 <- data_long %>%
-  anova_test(dv = task1_value, 
-             wid = id, 
-             within = task1, 
-             between = condition,
-             effect.size = "ges") %>%
-  get_anova_table()
-overall_anova1
-
-
 
 
 ## Task 2 ----
@@ -242,6 +242,17 @@ data_prep %>%
   group_by(condition) %>%
   get_summary_stats(task2_a, task2_c, task2_e, task2_n, task2_o, type = "mean_sd") %>% 
   arrange(variable)
+
+
+# overall ANOVA
+overall_anova2 <- data_long %>%
+  anova_test(dv = task2_value, 
+             wid = id, 
+             within = task2, 
+             between = condition,
+             effect.size = "ges") %>%
+  get_anova_table()
+overall_anova2
 
 
 # calculate t-test for every trait - influence of condition on each trait rating
@@ -346,17 +357,6 @@ eta_squared(t2_anova_n, partial = FALSE)
 t2_anova_o <- lmer(task2_o_value ~ condition * task2_o_type + (1 | id), data = data_prep_o)
 anova(t2_anova_o)
 eta_squared(t2_anova_o, partial = FALSE)
-
-
-# overall ANOVA
-overall_anova2 <- data_long %>%
-  anova_test(dv = task2_value, 
-             wid = id, 
-             within = task2, 
-             between = condition,
-             effect.size = "ges") %>%
-  get_anova_table()
-overall_anova2
 
 
 
